@@ -18,7 +18,7 @@ A skill suite for **PocketClaw** and **OpenClaw / Hermes** host operations.
 
 | Skill | Entry Point | Description |
 |-------|-------------|-------------|
-| **clawpilot-pair** | `clawpilot pair --runtime <openclaw\|hermes>` | Install / upgrade ClawPilot, verify host runtime readiness, generate a PocketClaw pairing code |
+| **clawpilot-pair** | `clawpilot pair --runtime <openclaw|hermes>` | Install / upgrade ClawPilot, verify host runtime readiness, generate a PocketClaw pairing code |
 | **clawpilot-send** | `clawpilot send "/absolute/path/to/file"` | Send a local or generated file back to PocketClaw mobile (≤ 20 MB) |
 | **clawpilot-doctor** | `clawpilot status` · `clawpilot restart` | Diagnose and repair ClawPilot / OpenClaw host issues: status, logs, restart, update, self-repair |
 | **clawpilot-config** | `~/.config/openclaw/config.yaml` | Inspect and minimally fix gateway configuration (token, password, env vars) |
