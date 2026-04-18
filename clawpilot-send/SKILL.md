@@ -5,6 +5,11 @@ description: Use when the current PocketClaw conversation needs a local or gener
 
 # ClawPilot Send
 
+> **Entry Point:** `clawpilot send "/absolute/path/to/file"`
+> **File Limit:** ≤ 20 MB
+> **Depends On:** Active PocketClaw session via OpenClaw (`:3000`) or Hermes (`:4000`)
+> **Related Skills:** [`clawpilot-pair`](../clawpilot-pair/SKILL.md)
+
 Use this skill only for PocketClaw conversations, including older sessions that still show the legacy `ClawAI Relay` label.
 
 Treat the conversation as relay/mobile only when the current session context clearly shows `PocketClaw`, `ClawAI Relay`, or an equivalent relay label. If you cannot confirm that, do not guess.
@@ -21,19 +26,26 @@ Do not use this skill for Telegram, Discord, Slack, WhatsApp, email, or other no
 
 ## Required Action
 
-1. Resolve the absolute local file path.
-2. Determine the target runtime from the current PocketClaw conversation whenever possible.
+### Step 1 — Resolve File Path
+
+Resolve the absolute local file path. Verify the file exists and is ≤ 20 MB.
+
+### Step 2 — Determine Runtime
+
+Determine the target runtime from the current PocketClaw conversation whenever possible.
 - If the current PocketClaw session is clearly `OpenClaw`, use `--runtime openclaw`.
 - If the current PocketClaw session is clearly `Hermes`, use `--runtime hermes`.
 - Only ask the user which runtime to use if both runtimes are paired **and** the current conversation does not clearly identify the runtime.
 
-3. If only one runtime is paired on the host, run:
+### Step 3 — Send
+
+If only one runtime is paired on the host:
 
 ```bash
 clawpilot send "/absolute/path/to/file"
 ```
 
-4. If both OpenClaw and Hermes are paired on the same host, run:
+If both OpenClaw and Hermes are paired on the same host:
 
 ```bash
 clawpilot send --runtime <openclaw|hermes> "/absolute/path/to/file"

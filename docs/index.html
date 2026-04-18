@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClawPilot Skills Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --accent-purple: #bc8cff;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --text-bright: #f0f6fc;
+    --shadow: 0 8px 24px rgba(0,0,0,.4);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 2rem 1.5rem;
+    text-align: center;
+  }
+  .header h1 {
+    font-size: 2.2rem;
+    color: var(--text-bright);
+    letter-spacing: -.02em;
+  }
+  .header h1 span { color: var(--accent-blue); }
+  .header p {
+    color: var(--text-dim);
+    margin-top: .4rem;
+    font-size: .95rem;
+  }
+  .badge-row {
+    display: flex;
+    justify-content: center;
+    gap: .6rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .25rem .7rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-dim);
+  }
+  .badge .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .badge.green .dot  { background: var(--accent-green);  }
+  .badge.blue  .dot  { background: var(--accent-blue);   }
+  .badge.orange .dot { background: var(--accent-orange); }
+  .badge.purple .dot { background: var(--accent-purple); }
+
+  /* ── Layout ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: 1.15rem;
+    color: var(--text-bright);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .section-title::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 1.15rem;
+    border-radius: 2px;
+    background: var(--accent-blue);
+  }
+
+  /* ── Architecture diagram ── */
+  .arch-section { margin-bottom: 2.5rem; }
+  .arch-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    overflow-x: auto;
+  }
+  .arch-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    min-height: 200px;
+  }
+  .arch-node {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    text-align: center;
+    min-width: 140px;
+    transition: border-color .2s, transform .2s;
+  }
+  .arch-node:hover { border-color: var(--accent-blue); transform: translateY(-2px); }
+  .arch-node .icon { font-size: 1.6rem; margin-bottom: .4rem; }
+  .arch-node .label { font-weight: 600; font-size: .85rem; color: var(--text-bright); }
+  .arch-node .sub   { font-size: .72rem; color: var(--text-dim); margin-top: .2rem; }
+  .arch-arrow {
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  .arch-group {
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+    align-items: center;
+  }
+  .arch-group-label {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--accent-blue);
+    font-weight: 700;
+  }
+  .arch-group-items {
+    display: flex;
+    gap: .8rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ── Skill cards grid ── */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2.5rem;
+  }
+  .skill-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color .2s, box-shadow .2s;
+    cursor: default;
+  }
+  .skill-card:hover {
+    border-color: var(--accent-blue);
+    box-shadow: var(--shadow);
+  }
+  .skill-card .card-header {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .8rem;
+  }
+  .skill-card .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .skill-card .card-icon.pair   { background: rgba(63,185,80,.15); }
+  .skill-card .card-icon.send   { background: rgba(88,166,255,.15); }
+  .skill-card .card-icon.doctor { background: rgba(210,153,34,.15); }
+  .skill-card .card-icon.config { background: rgba(188,140,255,.15); }
+  .skill-card .card-title {
+    font-weight: 700;
+    font-size: .95rem;
+    color: var(--text-bright);
+  }
+  .skill-card .card-desc {
+    font-size: .82rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+  .skill-card .card-entry {
+    font-size: .78rem;
+    padding: .5rem .7rem;
+    background: var(--bg);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-bottom: .6rem;
+  }
+  .skill-card .card-entry .label {
+    color: var(--accent-blue);
+    font-weight: 600;
+  }
+  .skill-card .card-entry code {
+    color: var(--accent-green);
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .78rem;
+  }
+
+  /* Workflow steps */
+  .workflow {
+    list-style: none;
+    margin-top: .8rem;
+  }
+  .workflow li {
+    position: relative;
+    padding-left: 1.4rem;
+    font-size: .78rem;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+  .workflow li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: .55rem;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-green);
+    background: var(--bg);
+  }
+  .workflow li::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 1.3rem;
+    width: 2px;
+    height: calc(100% - .4rem);
+    background: var(--border);
+  }
+  .workflow li:last-child::after { display: none; }
+
+  /* ── Port / Entry‑Point table ── */
+  .table-section { margin-bottom: 2.5rem; }
+  .port-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .port-table th, .port-table td {
+    text-align: left;
+    padding: .75rem 1rem;
+    font-size: .82rem;
+  }
+  .port-table th {
+    background: var(--bg);
+    color: var(--text-dim);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: .7rem;
+    letter-spacing: .06em;
+    border-bottom: 1px solid var(--border);
+  }
+  .port-table td {
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .port-table tr:last-child td { border-bottom: none; }
+  .port-table code {
+    background: var(--bg);
+    padding: .15rem .4rem;
+    border-radius: 4px;
+    font-size: .78rem;
+    color: var(--accent-green);
+    font-family: 'SFMono-Regular', Consolas, monospace;
+  }
+  .port-table .runtime-tag {
+    display: inline-block;
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 600;
+  }
+  .port-table .runtime-tag.oc   { background: rgba(63,185,80,.15); color: var(--accent-green); }
+  .port-table .runtime-tag.hm   { background: rgba(88,166,255,.15); color: var(--accent-blue); }
+  .port-table .runtime-tag.both { background: rgba(210,153,34,.15); color: var(--accent-orange); }
+
+  /* Status indicator */
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: .4rem;
+  }
+  .status-dot.ok   { background: var(--accent-green);  }
+  .status-dot.warn { background: var(--accent-orange); }
+
+  /* ── Deployment section ── */
+  .deploy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .deploy-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+  }
+  .deploy-card h3 {
+    font-size: .88rem;
+    color: var(--text-bright);
+    margin-bottom: .6rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .deploy-card pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .7rem .9rem;
+    font-size: .76rem;
+    color: var(--accent-green);
+    overflow-x: auto;
+    line-height: 1.6;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-dim);
+    font-size: .75rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 680px) {
+    .header h1 { font-size: 1.5rem; }
+    .arch-diagram { flex-direction: column; }
+    .arch-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="header">
+  <h1>🦀 <span>ClawPilot</span> Skills Dashboard</h1>
+  <p>PocketClaw &amp; OpenClaw / Hermes 主机运维技能套件 — 全景可视化</p>
+  <div class="badge-row">
+    <span class="badge green"><span class="dot"></span>4 Skills Active</span>
+    <span class="badge blue"><span class="dot"></span>2 Runtimes Supported</span>
+    <span class="badge orange"><span class="dot"></span>OpenClaw + Hermes</span>
+    <span class="badge purple"><span class="dot"></span>PocketClaw Ready</span>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ═══════════ ARCHITECTURE ═══════════ -->
+<section class="arch-section">
+  <h2 class="section-title">系统架构 · Architecture</h2>
+  <div class="arch-box">
+    <div class="arch-diagram">
+
+      <!-- Mobile -->
+      <div class="arch-node" style="border-color:var(--accent-blue)">
+        <div class="icon">📱</div>
+        <div class="label">PocketClaw</div>
+        <div class="sub">Mobile Client</div>
+      </div>
+
+      <div class="arch-arrow">⟶</div>
+
+      <!-- ClawPilot CLI -->
+      <div class="arch-node" style="border-color:var(--accent-green)">
+        <div class="icon">🦀</div>
+        <div class="label">ClawPilot CLI</div>
+        <div class="sub">pair · send · status · restart</div>
+      </div>
+
+      <div class="arch-arrow">⟶</div>
+
+      <!-- Skills -->
+      <div class="arch-group">
+        <div class="arch-group-label">Skills Layer</div>
+        <div class="arch-group-items">
+          <div class="arch-node" style="border-color:var(--accent-green);min-width:100px">
+            <div class="icon">🔗</div>
+            <div class="label">Pair</div>
+          </div>
+          <div class="arch-node" style="border-color:var(--accent-blue);min-width:100px">
+            <div class="icon">📤</div>
+            <div class="label">Send</div>
+          </div>
+          <div class="arch-node" style="border-color:var(--accent-orange);min-width:100px">
+            <div class="icon">🩺</div>
+            <div class="label">Doctor</div>
+          </div>
+          <div class="arch-node" style="border-color:var(--accent-purple);min-width:100px">
+            <div class="icon">⚙️</div>
+            <div class="label">Config</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-arrow">⟶</div>
+
+      <!-- Runtimes -->
+      <div class="arch-group">
+        <div class="arch-group-label">Host Runtimes</div>
+        <div class="arch-group-items">
+          <div class="arch-node" style="border-color:var(--accent-green)">
+            <div class="icon">🌐</div>
+            <div class="label">OpenClaw</div>
+            <div class="sub">Gateway :3000</div>
+          </div>
+          <div class="arch-node" style="border-color:var(--accent-blue)">
+            <div class="icon">⚡</div>
+            <div class="label">Hermes</div>
+            <div class="sub">Gateway :4000</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SKILL CARDS ═══════════ -->
+<section>
+  <h2 class="section-title">技能详情 · Skill Cards</h2>
+  <div class="skills-grid">
+
+    <!-- PAIR -->
+    <div class="skill-card">
+      <div class="card-header">
+        <div class="card-icon pair">🔗</div>
+        <div class="card-title">clawpilot-pair</div>
+      </div>
+      <div class="card-desc">
+        安装 / 升级 ClawPilot，验证主机运行时就绪状态，生成 PocketClaw 配对码。
+      </div>
+      <div class="card-entry">
+        <span class="label">CLI 入口：</span>
+        <code>clawpilot pair --runtime &lt;openclaw|hermes&gt;</code>
+      </div>
+      <div class="card-entry">
+        <span class="label">安装命令：</span>
+        <code>npm i -g @rethinkingstudio/clawpilot@latest</code>
+      </div>
+      <ol class="workflow">
+        <li>安装 / 升级 ClawPilot</li>
+        <li>检测目标运行时（openclaw / hermes）</li>
+        <li>运行时就绪检查（auth、gateway 可达性）</li>
+        <li>生成配对码并输出</li>
+      </ol>
+    </div>
+
+    <!-- SEND -->
+    <div class="skill-card">
+      <div class="card-header">
+        <div class="card-icon send">📤</div>
+        <div class="card-title">clawpilot-send</div>
+      </div>
+      <div class="card-desc">
+        将本地或生成的文件发送回 PocketClaw 移动端，自动处理上传、路由和消息投递。
+      </div>
+      <div class="card-entry">
+        <span class="label">CLI 入口：</span>
+        <code>clawpilot send "/absolute/path/to/file"</code>
+      </div>
+      <div class="card-entry">
+        <span class="label">双运行时：</span>
+        <code>clawpilot send --runtime &lt;oc|hm&gt; "/path"</code>
+      </div>
+      <ol class="workflow">
+        <li>确认会话为 PocketClaw / Relay</li>
+        <li>解析绝对文件路径</li>
+        <li>检测运行时并选择路由</li>
+        <li>调用 clawpilot send 完成投递</li>
+      </ol>
+    </div>
+
+    <!-- DOCTOR -->
+    <div class="skill-card">
+      <div class="card-header">
+        <div class="card-icon doctor">🩺</div>
+        <div class="card-title">clawpilot-doctor</div>
+      </div>
+      <div class="card-desc">
+        诊断和修复 ClawPilot / OpenClaw 主机问题：状态检查、日志、重启、更新、自修复。
+      </div>
+      <div class="card-entry">
+        <span class="label">状态检查：</span>
+        <code>clawpilot status</code>
+      </div>
+      <div class="card-entry">
+        <span class="label">重启服务：</span>
+        <code>clawpilot restart</code>
+      </div>
+      <ol class="workflow">
+        <li>执行最小化诊断操作</li>
+        <li>报告检查项的通过 / 失败</li>
+        <li>给出下一步修复命令</li>
+        <li>验证修复结果</li>
+      </ol>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="skill-card">
+      <div class="card-header">
+        <div class="card-icon config">⚙️</div>
+        <div class="card-title">clawpilot-config</div>
+      </div>
+      <div class="card-desc">
+        定位、验证并最小化修复 ClawPilot / OpenClaw 网关配置（token、密码、环境变量）。
+      </div>
+      <div class="card-entry">
+        <span class="label">配置路径：</span>
+        <code>~/.config/openclaw/config.yaml</code>
+      </div>
+      <div class="card-entry">
+        <span class="label">检查项：</span>
+        <code>gateway_token · password · env vars</code>
+      </div>
+      <ol class="workflow">
+        <li>定位配置文件</li>
+        <li>检查 auth 相关字段</li>
+        <li>验证环境变量引用是否存在</li>
+        <li>报告缺失项并提出最小修复</li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════ PORT / ENTRY TABLE ═══════════ -->
+<section class="table-section">
+  <h2 class="section-title">端口与入口一览 · Port &amp; Entry Points</h2>
+  <table class="port-table">
+    <thead>
+      <tr>
+        <th>服务 / 技能</th>
+        <th>入口命令 / 端口</th>
+        <th>运行时</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="status-dot ok"></span><strong>OpenClaw Gateway</strong></td>
+        <td><code>http://localhost:3000</code></td>
+        <td><span class="runtime-tag oc">OpenClaw</span></td>
+        <td>OpenClaw 网关主入口，处理 API 请求与配对</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span><strong>Hermes Gateway</strong></td>
+        <td><code>http://localhost:4000</code></td>
+        <td><span class="runtime-tag hm">Hermes</span></td>
+        <td>Hermes 网关主入口，API 与配对服务</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span><strong>clawpilot pair</strong></td>
+        <td><code>clawpilot pair --runtime &lt;runtime&gt;</code></td>
+        <td><span class="runtime-tag both">Both</span></td>
+        <td>生成 PocketClaw 配对码（依赖网关端口可达）</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span><strong>clawpilot send</strong></td>
+        <td><code>clawpilot send "/path/to/file"</code></td>
+        <td><span class="runtime-tag both">Both</span></td>
+        <td>文件投递至 PocketClaw（≤ 20 MB）</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span><strong>clawpilot status</strong></td>
+        <td><code>clawpilot status</code></td>
+        <td><span class="runtime-tag both">Both</span></td>
+        <td>检查 ClawPilot 与网关运行状态</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span><strong>clawpilot restart</strong></td>
+        <td><code>clawpilot restart</code></td>
+        <td><span class="runtime-tag both">Both</span></td>
+        <td>重启网关服务</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span><strong>hermes gateway</strong></td>
+        <td><code>hermes gateway install &amp;&amp; hermes gateway start</code></td>
+        <td><span class="runtime-tag hm">Hermes</span></td>
+        <td>Hermes 网关服务安装与启动</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span><strong>Config File</strong></td>
+        <td><code>~/.config/openclaw/config.yaml</code></td>
+        <td><span class="runtime-tag oc">OpenClaw</span></td>
+        <td>OpenClaw 配置文件路径（token / password / env）</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════ DEPLOYMENT ═══════════ -->
+<section>
+  <h2 class="section-title">部署指南 · Deployment</h2>
+  <div class="deploy-grid">
+
+    <div class="deploy-card">
+      <h3>🚀 快速开始</h3>
+      <pre># 1. 安装 ClawPilot CLI
+npm install -g @rethinkingstudio/clawpilot@latest
+
+# 2. 选择运行时并配对
+clawpilot pair --runtime openclaw
+# 或
+clawpilot pair --runtime hermes
+
+# 3. 验证状态
+clawpilot status</pre>
+    </div>
+
+    <div class="deploy-card">
+      <h3>🌐 OpenClaw 运行时</h3>
+      <pre># 确认 OpenClaw 配置存在
+cat ~/.config/openclaw/config.yaml
+
+# 验证 Gateway Auth
+curl -s http://localhost:3000/health
+
+# 配对
+clawpilot pair --runtime openclaw</pre>
+    </div>
+
+    <div class="deploy-card">
+      <h3>⚡ Hermes 运行时</h3>
+      <pre># 安装 Hermes Gateway
+hermes gateway install
+hermes gateway start
+
+# 验证 Hermes 状态
+hermes gateway status
+
+# 配对
+clawpilot pair --runtime hermes</pre>
+    </div>
+
+    <div class="deploy-card">
+      <h3>📤 文件投递</h3>
+      <pre># 单运行时（自动检测）
+clawpilot send "/path/to/file.pdf"
+
+# 指定运行时（双运行时主机）
+clawpilot send --runtime openclaw "/path/to/file.pdf"
+clawpilot send --runtime hermes "/path/to/file.pdf"
+
+# 文件大小限制: ≤ 20 MB</pre>
+    </div>
+
+    <div class="deploy-card">
+      <h3>🩺 故障排查</h3>
+      <pre># 检查状态
+clawpilot status
+
+# 重启网关
+clawpilot restart
+
+# 查看日志（通过 OpenClaw / Hermes）
+# OpenClaw 自修复
+clawpilot doctor repair</pre>
+    </div>
+
+    <div class="deploy-card">
+      <h3>⚙️ 配置修复</h3>
+      <pre># 定位配置
+ls ~/.config/openclaw/
+
+# 检查必要字段
+# - gateway_token
+# - gateway_password
+# - OPENCLAW_TOKEN (env)
+
+# 验证环境变量
+echo $OPENCLAW_TOKEN</pre>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════ SKILL CROSS-REFERENCE ═══════════ -->
+<section class="table-section">
+  <h2 class="section-title">技能交叉引用 · Skill Cross-Reference</h2>
+  <table class="port-table">
+    <thead>
+      <tr>
+        <th>场景</th>
+        <th>推荐技能</th>
+        <th>触发条件</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>首次配对 PocketClaw</td>
+        <td><code>clawpilot-pair</code></td>
+        <td>用户请求 pair / 安装 / 配对码</td>
+      </tr>
+      <tr>
+        <td>发送文件到手机</td>
+        <td><code>clawpilot-send</code></td>
+        <td>PocketClaw 会话中请求发送文件</td>
+      </tr>
+      <tr>
+        <td>网关无法连接</td>
+        <td><code>clawpilot-doctor</code> → <code>clawpilot-config</code></td>
+        <td>status 失败 → 检查配置</td>
+      </tr>
+      <tr>
+        <td>Auth 认证失败</td>
+        <td><code>clawpilot-config</code></td>
+        <td>token / password / env 缺失或无效</td>
+      </tr>
+      <tr>
+        <td>升级 ClawPilot</td>
+        <td><code>clawpilot-pair</code></td>
+        <td>npm install -g @rethinkingstudio/clawpilot@latest</td>
+      </tr>
+      <tr>
+        <td>Hermes 网关未安装</td>
+        <td><code>clawpilot-pair</code> → <code>clawpilot-doctor</code></td>
+        <td>hermes gateway install → hermes gateway start</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</div>
+
+<footer class="footer">
+  ClawPilot Skills Dashboard · Built for PocketClaw &amp; OpenClaw / Hermes · v1.0.0
+</footer>
+
+</body>
+</html>

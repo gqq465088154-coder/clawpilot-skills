@@ -5,6 +5,10 @@ description: Use when the user wants to pair PocketClaw, install or upgrade Claw
 
 # ClawPilot Pair
 
+> **Entry Point:** `clawpilot pair --runtime <openclaw|hermes>`
+> **Depends On:** OpenClaw Gateway (`:3000`) or Hermes Gateway (`:4000`)
+> **Related Skills:** [`clawpilot-config`](../clawpilot-config/SKILL.md) · [`clawpilot-doctor`](../clawpilot-doctor/SKILL.md)
+
 Use this skill for PocketClaw pairing and first-time host setup.
 
 ## When To Use
@@ -22,26 +26,28 @@ Do not use this skill for normal chat replies, file delivery, or general diagnos
 
 Follow this order exactly. Do not skip checks.
 
-1. Install or upgrade ClawPilot:
+### Step 1 — Install or Upgrade ClawPilot
 
 ```bash
 npm install -g @rethinkingstudio/clawpilot@latest
 ```
 
-2. Determine the target runtime.
+### Step 2 — Determine Target Runtime
+
 - Use `openclaw` or `hermes`.
 - If the user does not specify and the host only has one runtime, use that runtime.
 - If both runtimes are available and the user did not specify, ask which runtime to pair.
 
-3. Run runtime-specific readiness checks before pairing.
+### Step 3 — Runtime Readiness Checks
 
-For `openclaw`:
+**For `openclaw`:**
 - Verify OpenClaw config can be found.
 - Verify gateway auth is usable.
-- Verify the local gateway is reachable.
+- Verify the local gateway is reachable at `http://localhost:3000`.
 - If auth or gateway reachability fails, stop and report the blocking step with the next command or config fix.
+- → Hand off to [`clawpilot-config`](../clawpilot-config/SKILL.md) if the config is the blocker.
 
-For `hermes`:
+**For `hermes`:**
 - Verify the `hermes` CLI exists.
 - Verify `hermes gateway status` works.
 - If the gateway service is not installed, tell the user to run:
@@ -51,9 +57,11 @@ hermes gateway install
 hermes gateway start
 ```
 
-- If Hermes API readiness fails, report the exact blocking step and the next command to run.
+- If Hermes API readiness fails (`http://localhost:4000`), report the exact blocking step and the next command to run.
 
-4. Only after readiness checks pass, generate the pairing code:
+### Step 4 — Generate Pairing Code
+
+Only after readiness checks pass:
 
 ```bash
 clawpilot pair --runtime openclaw

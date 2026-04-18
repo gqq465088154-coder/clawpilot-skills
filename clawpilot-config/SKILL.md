@@ -5,6 +5,10 @@ description: Use when the user needs help locating, validating, or minimally fix
 
 # ClawPilot Config
 
+> **Config Path:** `~/.config/openclaw/config.yaml`
+> **Key Fields:** `gateway_token` · `gateway_password` · `OPENCLAW_TOKEN` (env)
+> **Related Skills:** [`clawpilot-pair`](../clawpilot-pair/SKILL.md) · [`clawpilot-doctor`](../clawpilot-doctor/SKILL.md)
+
 Use this skill for ClawPilot and OpenClaw configuration inspection and minimal correction.
 
 ## When To Use
@@ -20,11 +24,34 @@ Do not use this skill for file delivery or general diagnostics when configuratio
 
 ## Workflow
 
-1. Locate the relevant config file.
-2. Inspect auth-related fields only.
-3. If auth is provided via environment variable references, verify the referenced variables exist.
-4. Explain exactly what is missing or misconfigured.
-5. If the fix is obvious and low-risk, propose the minimal change.
+### Step 1 — Locate Config
+
+```bash
+ls ~/.config/openclaw/config.yaml
+```
+
+### Step 2 — Inspect Auth Fields
+
+Check only auth-related fields:
+
+| Field | Type | Required |
+|-------|------|----------|
+| `gateway_token` | string | Yes (if no password) |
+| `gateway_password` | string | Yes (if no token) |
+| `OPENCLAW_TOKEN` | env var | Referenced in config |
+
+### Step 3 — Verify Environment Variables
+
+If auth is provided via environment variable references, verify the referenced variables exist:
+
+```bash
+echo $OPENCLAW_TOKEN
+```
+
+### Step 4 — Report & Fix
+
+- Explain exactly what is missing or misconfigured.
+- If the fix is obvious and low-risk, propose the minimal change.
 
 ## Output Rules
 
