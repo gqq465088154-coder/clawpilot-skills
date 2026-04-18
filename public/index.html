@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClawPilot Skills Dashboard</title>
+  <style>
+    /* ── reset & tokens ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --warn:      #d29922;
+      --danger:    #f85149;
+      --purple:    #a371f7;
+      --text:      #e6edf3;
+      --text-dim:  #8b949e;
+      --radius:    10px;
+      --shadow:    0 4px 24px rgba(0,0,0,.45);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── layout ─────────────────────────────────────────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,17,23,.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 58px;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .topbar .logo {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .topbar .logo .claw { font-size: 1.4rem; }
+    .topbar-spacer { flex: 1; }
+    .badge-live {
+      display: inline-flex; align-items: center; gap: .35rem;
+      font-size: .72rem; font-weight: 600; letter-spacing: .05em;
+      color: var(--accent2);
+      background: rgba(63,185,80,.12);
+      border: 1px solid rgba(63,185,80,.25);
+      border-radius: 20px; padding: .2rem .65rem;
+    }
+    .badge-live::before {
+      content: '';
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent2);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── hero ───────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 3.5rem 1rem 3rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800; letter-spacing: -.03em;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 60%, var(--accent2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .75rem;
+    }
+    .hero p {
+      color: var(--text-dim); font-size: 1.05rem;
+      max-width: 520px; margin: 0 auto 2rem;
+    }
+
+    /* ── port table ─────────────────────────────────────────── */
+    .section-title {
+      font-size: .72rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--text-dim);
+      margin-bottom: 1rem;
+    }
+    .port-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .port-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.4rem;
+      display: flex; flex-direction: column; gap: .4rem;
+      transition: border-color .2s, transform .2s, box-shadow .2s;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .port-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(88,166,255,.15);
+    }
+    .port-card .pc-num {
+      font-size: 1.55rem; font-weight: 800; font-variant-numeric: tabular-nums;
+      color: var(--accent);
+    }
+    .port-card .pc-label {
+      font-size: .88rem; font-weight: 600; color: var(--text);
+    }
+    .port-card .pc-path {
+      font-size: .78rem; color: var(--text-dim);
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+    .port-card .pc-pill {
+      align-self: flex-start;
+      font-size: .67rem; font-weight: 700; letter-spacing: .05em;
+      padding: .15rem .5rem; border-radius: 20px;
+      margin-top: .2rem;
+    }
+    .pill-web  { background: rgba(88,166,255,.15);  color: var(--accent);  border: 1px solid rgba(88,166,255,.3); }
+    .pill-api  { background: rgba(163,113,247,.15); color: var(--purple);  border: 1px solid rgba(163,113,247,.3); }
+    .pill-health{ background: rgba(63,185,80,.15);  color: var(--accent2); border: 1px solid rgba(63,185,80,.3); }
+
+    /* ── skill cards ────────────────────────────────────────── */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 3rem;
+    }
+    .skill-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .skill-card:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+    .skill-card-header {
+      padding: 1.2rem 1.4rem .9rem;
+      display: flex; align-items: flex-start; gap: .9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .skill-icon {
+      width: 40px; height: 40px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .skill-card-header h3 {
+      font-size: .97rem; font-weight: 700;
+      margin-bottom: .2rem;
+    }
+    .skill-card-header .skill-id {
+      font-size: .74rem; color: var(--text-dim);
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+    .skill-card-body {
+      padding: 1rem 1.4rem;
+      font-size: .85rem; color: var(--text-dim);
+      line-height: 1.55;
+      flex: 1;
+    }
+    .skill-card-footer {
+      padding: .75rem 1.4rem;
+      border-top: 1px solid var(--border);
+      display: flex; gap: .5rem;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: .35rem;
+      font-size: .78rem; font-weight: 600;
+      padding: .35rem .85rem; border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text); cursor: pointer;
+      text-decoration: none;
+      transition: background .15s, border-color .15s;
+    }
+    .btn:hover { background: var(--border); border-color: var(--accent); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #0d1117; }
+    .btn-primary:hover { background: #79bcff; }
+
+    /* ── skill detail modal ─────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.7);
+      display: none; align-items: flex-start; justify-content: center;
+      padding: 3rem 1rem;
+      overflow-y: auto;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%; max-width: 760px;
+      box-shadow: var(--shadow);
+      animation: slideUp .2s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .modal-header {
+      display: flex; align-items: center; gap: .8rem;
+      padding: 1.4rem 1.6rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { flex: 1; font-size: 1.15rem; font-weight: 700; }
+    .modal-close {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 1.4rem; cursor: pointer; line-height: 1;
+      padding: .2rem .5rem; border-radius: 6px;
+    }
+    .modal-close:hover { background: var(--surface2); color: var(--text); }
+    .modal-body {
+      padding: 1.6rem;
+      overflow-y: auto;
+    }
+
+    /* ── markdown rendering ─────────────────────────────────── */
+    .md h1,.md h2,.md h3 { color: var(--text); font-weight: 700; margin: 1.4rem 0 .6rem; }
+    .md h1 { font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: .5rem; }
+    .md h2 { font-size: 1.1rem; }
+    .md h3 { font-size: .97rem; }
+    .md p { color: var(--text-dim); margin-bottom: .8rem; font-size: .9rem; }
+    .md ul,.md ol { padding-left: 1.5rem; margin-bottom: .8rem; }
+    .md li { color: var(--text-dim); font-size: .9rem; margin-bottom: .25rem; }
+    .md code {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: .82em;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .1em .4em;
+      color: var(--purple);
+    }
+    .md pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+    .md pre code {
+      background: none; border: none; padding: 0;
+      color: var(--text); font-size: .83rem;
+    }
+    .md hr { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+    .md strong { color: var(--text); }
+
+    /* ── status bar ─────────────────────────────────────────── */
+    .status-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.5rem;
+      display: flex; gap: 2rem; flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .status-item { display: flex; flex-direction: column; gap: .15rem; }
+    .status-item .si-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); }
+    .status-item .si-value { font-size: 1.1rem; font-weight: 700; color: var(--accent2); font-variant-numeric: tabular-nums; }
+
+    /* ── loading spinner ────────────────────────────────────── */
+    .spinner {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      animation: spin .7s linear infinite;
+      margin: 3rem auto;
+    }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ── footer ─────────────────────────────────────────────── */
+    .footer {
+      text-align: center; padding: 2rem 1rem;
+      font-size: .78rem; color: var(--text-dim);
+      border-top: 1px solid var(--border);
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── responsive ─────────────────────────────────────────── */
+    @media (max-width: 500px) {
+      .topbar { padding: 0 1rem; }
+      .page { padding: 1.5rem 1rem 3rem; }
+      .hero { padding: 2rem 0 1.5rem; }
+      .status-bar { gap: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── top bar ───────────────────────────────────────────────────────────────── -->
+<header class="topbar">
+  <a class="logo" href="/">
+    <span class="claw">🦞</span>
+    <span>ClawPilot Skills</span>
+  </a>
+  <div class="topbar-spacer"></div>
+  <span class="badge-live">LIVE</span>
+</header>
+
+<!-- ── main ──────────────────────────────────────────────────────────────────── -->
+<main class="page">
+
+  <!-- hero -->
+  <section class="hero">
+    <h1>ClawPilot Skills Dashboard</h1>
+    <p>全站可视化 · 技能管理 · 实时状态 · 部署总览</p>
+  </section>
+
+  <!-- runtime status -->
+  <p class="section-title">🖥️ 运行时状态</p>
+  <div class="status-bar" id="statusBar">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- port entrance table -->
+  <p class="section-title">🚪 端口入口</p>
+  <div class="port-grid">
+    <a class="port-card" href="/" target="_blank">
+      <div class="pc-num">3000</div>
+      <div class="pc-label">Web 仪表盘</div>
+      <div class="pc-path">http://localhost:3000/</div>
+      <span class="pc-pill pill-web">WEB UI</span>
+    </a>
+    <a class="port-card" href="/api/skills" target="_blank">
+      <div class="pc-num">3000</div>
+      <div class="pc-label">Skills API</div>
+      <div class="pc-path">http://localhost:3000/api/skills</div>
+      <span class="pc-pill pill-api">REST API</span>
+    </a>
+    <a class="port-card" href="/api/health" target="_blank">
+      <div class="pc-num">3000</div>
+      <div class="pc-label">Health 检查</div>
+      <div class="pc-path">http://localhost:3000/api/health</div>
+      <span class="pc-pill pill-health">HEALTH</span>
+    </a>
+  </div>
+
+  <!-- skills visualization -->
+  <p class="section-title">⚡ 技能列表</p>
+  <div class="skills-grid" id="skillsGrid">
+    <div class="spinner"></div>
+  </div>
+
+</main>
+
+<!-- ── footer ─────────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  ClawPilot Skills Dashboard &nbsp;·&nbsp;
+  <a href="/api/skills" target="_blank">API</a> &nbsp;·&nbsp;
+  <a href="/api/health" target="_blank">Health</a>
+</footer>
+
+<!-- ── skill detail modal ────────────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <span id="modalIcon" style="font-size:1.5rem"></span>
+      <h2 id="modalTitle">—</h2>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body md" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ── marked (CDN fallback) ─────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<script>
+(function () {
+  // ── skill metadata ──────────────────────────────────────────────────────────
+  const SKILL_META = {
+    'clawpilot-pair':   { icon: '🔗', color: '#58a6ff', label: 'Pair'   },
+    'clawpilot-send':   { icon: '📤', color: '#3fb950', label: 'Send'   },
+    'clawpilot-doctor': { icon: '🩺', color: '#d29922', label: 'Doctor' },
+    'clawpilot-config': { icon: '⚙️',  color: '#a371f7', label: 'Config' },
+  };
+
+  // ── load runtime status ─────────────────────────────────────────────────────
+  async function loadStatus() {
+    const bar = document.getElementById('statusBar');
+    try {
+      const res = await fetch('/api/health');
+      const data = await res.json();
+      bar.innerHTML = `
+        <div class="status-item">
+          <span class="si-label">状态</span>
+          <span class="si-value" style="color:var(--accent2)">● 运行中</span>
+        </div>
+        <div class="status-item">
+          <span class="si-label">端口</span>
+          <span class="si-value">${data.port}</span>
+        </div>
+        <div class="status-item">
+          <span class="si-label">运行时长</span>
+          <span class="si-value" id="uptime">${fmtUptime(data.uptime)}</span>
+        </div>
+        <div class="status-item">
+          <span class="si-label">Node.js</span>
+          <span class="si-value" style="color:var(--accent)">${navigator.userAgent.includes('Node') ? 'v20' : 'active'}</span>
+        </div>
+      `;
+      // tick uptime
+      let base = data.uptime;
+      setInterval(() => {
+        base += 1;
+        const el = document.getElementById('uptime');
+        if (el) el.textContent = fmtUptime(base);
+      }, 1000);
+    } catch {
+      bar.innerHTML = `<span style="color:var(--danger)">⚠ 无法连接到服务器</span>`;
+    }
+  }
+
+  function fmtUptime(s) {
+    s = Math.floor(s);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    if (h > 0) return `${h}h ${m}m ${sec}s`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+  }
+
+  // ── load skills grid ────────────────────────────────────────────────────────
+  async function loadSkills() {
+    const grid = document.getElementById('skillsGrid');
+    try {
+      const res = await fetch('/api/skills');
+      const data = await res.json();
+      if (!data.ok || !data.skills.length) {
+        grid.innerHTML = '<p style="color:var(--text-dim)">暂无技能数据</p>';
+        return;
+      }
+      grid.innerHTML = data.skills.map((s) => {
+        const m = SKILL_META[s.id] || { icon: '📄', color: '#8b949e', label: s.name };
+        return `
+          <div class="skill-card">
+            <div class="skill-card-header">
+              <div class="skill-icon" style="background:${m.color}22;border:1px solid ${m.color}44">${m.icon}</div>
+              <div>
+                <h3>${s.name}</h3>
+                <span class="skill-id">${s.id}</span>
+              </div>
+            </div>
+            <div class="skill-card-body">${truncate(s.description, 160)}</div>
+            <div class="skill-card-footer">
+              <button class="btn btn-primary" onclick="openSkill('${s.id}')">查看详情</button>
+              <a class="btn" href="/api/skills/${s.id}" target="_blank">JSON</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch {
+      grid.innerHTML = '<p style="color:var(--danger)">加载技能失败</p>';
+    }
+  }
+
+  function truncate(str, n) {
+    return str.length > n ? str.slice(0, n) + '…' : str;
+  }
+
+  // ── modal ───────────────────────────────────────────────────────────────────
+  window.openSkill = async function (id) {
+    const backdrop = document.getElementById('modalBackdrop');
+    const body = document.getElementById('modalBody');
+    const title = document.getElementById('modalTitle');
+    const icon = document.getElementById('modalIcon');
+    const m = SKILL_META[id] || { icon: '📄', label: id };
+
+    icon.textContent = m.icon;
+    title.textContent = id;
+    body.innerHTML = '<div class="spinner"></div>';
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const res = await fetch(`/api/skills/${id}`);
+      const data = await res.json();
+      if (data.ok) {
+        title.textContent = data.skill.name;
+        // use marked if available, else plain pre
+        if (typeof marked !== 'undefined') {
+          body.innerHTML = marked.parse(data.skill.body);
+        } else {
+          body.innerHTML = `<pre style="white-space:pre-wrap;color:var(--text-dim)">${data.skill.body}</pre>`;
+        }
+      } else {
+        body.innerHTML = '<p style="color:var(--danger)">加载失败</p>';
+      }
+    } catch {
+      body.innerHTML = '<p style="color:var(--danger)">网络错误</p>';
+    }
+  };
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalBackdrop').addEventListener('click', function (e) {
+    if (e.target === this) closeModal();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  function closeModal() {
+    document.getElementById('modalBackdrop').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ── init ────────────────────────────────────────────────────────────────────
+  loadStatus();
+  loadSkills();
+})();
+</script>
+</body>
+</html>
