@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  dashboard:
+    build: .
+    container_name: clawpilot-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"          # Web UI  →  http://localhost:3000/
+    environment:
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
